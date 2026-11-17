@@ -95,10 +95,16 @@
     </div>
   </div>
 
-  <!-- ГРАФИКИ -->
-  <div class="charts">
-    <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
-    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+   <!-- ГРАФИКИ -->
+  <div class="grid">
+    <div class="panel">
+      <h2>Структура затрат</h2>
+      <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Стоимость материалов</h2>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
   </div>
 
   <footer>
@@ -108,7 +114,7 @@
 </div>
 
 <script>
-  /* ==================== ЦЕХ 73 — клиентский калькулятор ==================== */
+ /* ==================== ЦЕХ 73 — клиентский калькулятор ==================== */
 const STORAGE_KEY = 'ceh73_saves_v1';
 let pieChart = null, barChart = null;
 
@@ -237,11 +243,10 @@ function setFormData(d = {}) {
   });
 }
 
-/* ---------- РАСЧЁТ (полностью на клиенте) ---------- */
+/* ---------- РАСЧЁТ ---------- */
 function calculateLocal(d) {
   const materials = d.materials || [];
-  const materials_cost = materials.reduce(
-    (s, m) => s + num(m.cost) * num(m.qty), 0);
+  const materials_cost = materials.reduce((s, m) => s + num(m.cost) * num(m.qty), 0);
   const per_material = materials.map(m => ({
     name: m.name || 'Без названия',
     cost: +(num(m.cost) * num(m.qty)).toFixed(2),
@@ -329,7 +334,19 @@ function renderCharts(r) {
     data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#17181a' }] },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { color: '#e6e6e6' } } }
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8a8f98',
+            boxWidth: 8,       // Узкие маркеры
+            boxHeight: 8,
+            padding: 10,       // Отступы между строками
+            font: { size: 10 }, // Мелкий шрифт
+            maxWidth: 150      // Ограничение ширины текста (заставляет переноситься)
+          }
+        }
+      }
     }
   });
 
@@ -344,7 +361,7 @@ function renderCharts(r) {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#8a8f98' } },
+        x: { ticks: { color: '#8a8f98', font: { size: 10 } } },
         y: { ticks: { color: '#8a8f98' }, beginAtZero: true }
       }
     }
@@ -462,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <style>
-  /* ================= ИНДУСТРИАЛЬНАЯ ТЕМА ================= */
+/* ================= ИНДУСТРИАЛЬНАЯ ТЕМА ================= */
 :root {
   --bg: #0f0f10; --panel: #17181a; --line: #2a2d33; --line-hi: #3a3e46;
   --text: #e6e6e6; --muted: #8a8f98; --accent: #ff6a00; --accent-2: #ffb300;
@@ -587,7 +604,6 @@ input::placeholder { color: #4a4f57; }
 .saved-item .actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 /* Графики */
-.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .chart-wrap {
   position: relative; height: 320px;
   background: #0b0c0e; border: 1px solid var(--line); padding: 12px;
@@ -605,7 +621,7 @@ footer {
 
 /* ================= МОБИЛЬНАЯ АДАПТАЦИЯ ================= */
 @media (max-width: 650px) {
-  .grid, .charts { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; }
   .row-materials, .row-equipment, .row-workers {
     grid-template-columns: 1fr 1fr;
     gap: 4px; padding-bottom: 12px;
