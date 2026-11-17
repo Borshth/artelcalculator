@@ -3,159 +3,438 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Калькулятор стоимости изделия</title>
+<title>ЦЕХ 73 — Калькулятор</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+  /* ================= ИНДУСТРИАЛЬНАЯ ТЕМА ================= */
+  :root {
+    --bg:        #0f0f10;
+    --panel:     #17181a;
+    --panel-2:   #1e2024;
+    --line:      #2a2d33;
+    --line-hi:   #3a3e46;
+    --text:      #e6e6e6;
+    --muted:     #8a8f98;
+    --accent:    #ff6a00;   /* промышленный оранжевый */
+    --accent-2:  #ffb300;   /* жёлто-стальной */
+    --good:      #4ade80;
+    --danger:    #ef4444;
+    --steel:     #5a616b;
+  }
   * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: #f4f6f8; color: #2b3440; margin: 0; padding: 20px;
+    margin: 0; padding: 0;
+    background:
+      repeating-linear-gradient(45deg, #0f0f10 0 12px, #121214 12px 24px),
+      var(--bg);
+    color: var(--text);
+    font-family: "Consolas", "JetBrains Mono", "SF Mono", monospace;
+    font-size: 14px;
+    min-height: 100vh;
   }
-  .container { max-width: 1240px; margin: 0 auto; }
-  h1 { text-align: center; margin: 10px 0 20px; color: #1f2937; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media (max-width: 950px) { .grid { grid-template-columns: 1fr; } }
-  .card {
-    background: #fff; border-radius: 12px; padding: 18px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 18px;
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  /* ================= HEADER с логотипом ================= */
+  header.hero {
+    position: relative;
+    border: 2px solid var(--line-hi);
+    background:
+      linear-gradient(180deg, #1b1c20 0%, #141518 100%);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    display: flex; align-items: center; gap: 24px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
   }
-  .card h2 { margin-top: 0; font-size: 17px; }
-  label { display: block; font-size: 13px; color: #64748b; margin: 10px 0 4px; }
+  header.hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(90deg,
+        transparent 0 30px,
+        rgba(255,255,255,0.012) 30px 31px);
+    pointer-events: none;
+  }
+  header.hero::after {
+    content: "";
+    position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+    background: repeating-linear-gradient(90deg,
+      var(--accent) 0 22px, transparent 22px 44px);
+    opacity: .85;
+  }
+
+  /* ================= ЛОГОТИП "ЦЕХ 73" ================= */
+  .logo {
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: 4px; user-select: none; flex-shrink: 0;
+  }
+  .logo .row {
+    display: flex; gap: 4px;
+  }
+  /* Строительные блоки логотипа */
+  .b {
+    background: var(--text);
+    display: block;
+    width: 8px; height: 26px;
+  }
+  .b.h { width: 26px; height: 8px; }
+  .b.sq { width: 8px; height: 8px; }
+  .logo-row1, .logo-row2 { display: flex; align-items: center; gap: 4px; }
+  .logo-row2 { margin-top: 6px; }
+  .logo .glyph {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .logo .glyph-tall { display: flex; gap: 4px; align-items: flex-end; }
+
+  /* Буква Ц: два вертикальных блока + нижняя горизонталь справа + ножка */
+  .glyph-CE { gap: 4px; }
+  .C-block { display: grid; grid-template-columns: 8px 4px 8px; gap: 4px; }
+  .C-v { width: 8px; height: 26px; background: var(--text); }
+  .C-gap { width: 4px; height: 26px; }
+  .C-bottom { width: 8px; height: 8px; background: var(--text); align-self: end; }
+
+  /* Буква Х — диагональ из двух прямоугольников */
+  .X-shape {
+    position: relative; width: 24px; height: 26px;
+  }
+  .X-shape::before, .X-shape::after {
+    content: ""; position: absolute; left: 50%; top: 0;
+    width: 6px; height: 100%; background: var(--text);
+    transform-origin: center;
+  }
+  .X-shape::before { transform: translateX(-50%) rotate(32deg); }
+  .X-shape::after  { transform: translateX(-50%) rotate(-32deg); }
+
+  /* Цифра 7 (нижний ряд) — верхняя горизонталь + наклон */
+  .seven {
+    position: relative; width: 46px; height: 30px;
+  }
+  .seven::before {
+    content: ""; position: absolute; left: 0; top: 0;
+    width: 100%; height: 8px; background: var(--text);
+  }
+  .seven::after {
+    content: ""; position: absolute; left: 55%; top: 0;
+    width: 7px; height: 100%; background: var(--text);
+    transform: skewX(-28deg); transform-origin: top left;
+  }
+  /* Цифра 3 — три горизонтали + правая вертикаль */
+  .three {
+    display: grid;
+    grid-template-columns: 26px 8px;
+    grid-template-rows: 8px 8px 8px;
+    gap: 4px; align-items: center;
+  }
+  .three .bar { background: var(--text); width: 26px; height: 8px; }
+  .three .bar.right { width: 8px; justify-self: end; }
+  .three .col { width: 8px; height: 8px; background: var(--text); }
+
+  /* Инфо в шапке */
+  .hero-info { flex: 1; min-width: 0; }
+  .hero-title {
+    font-size: 12px; letter-spacing: 4px; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .hero-sub {
+    font-size: 20px; font-weight: 700; letter-spacing: 1px;
+    color: var(--text); text-transform: uppercase;
+  }
+  .hero-tag {
+    display: inline-block; margin-top: 6px;
+    font-size: 10px; letter-spacing: 3px; color: var(--accent);
+    border: 1px solid var(--accent); padding: 2px 8px;
+    text-transform: uppercase;
+  }
+
+  /* ================= СЕТКА / ПАНЕЛИ ================= */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    position: relative;
+    padding: 16px 16px 18px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    margin-bottom: 16px;
+  }
+  .panel::before {
+    content: ""; position: absolute; left: 0; top: 0;
+    width: 4px; height: 100%; background: var(--accent);
+  }
+  .panel h2 {
+    margin: 0 0 12px; font-size: 12px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2::after {
+    content: ""; flex: 1; height: 1px;
+    background: repeating-linear-gradient(90deg,
+      var(--line-hi) 0 6px, transparent 6px 12px);
+  }
+  .panel h2 .tag {
+    color: var(--accent); font-size: 10px; letter-spacing: 2px;
+  }
+
+  /* Поля ввода */
+  label {
+    display: block; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted);
+    margin: 10px 0 4px;
+  }
   input, select {
-    width: 100%; padding: 8px 10px; border: 1px solid #d1d5db;
-    border-radius: 8px; font-size: 14px; background: #fff;
+    width: 100%; padding: 8px 10px;
+    background: #0b0c0e; color: var(--text);
+    border: 1px solid var(--line-hi);
+    font-family: inherit; font-size: 13px;
+    transition: border-color .15s;
   }
-  input:focus { outline: none; border-color: #3b82f6; }
-  .material-row {
-    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.7fr auto;
-    gap: 6px; margin-bottom: 6px; align-items: center;
+  input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255,106,0,.15);
   }
-  .equipment-row {
-    display: grid; grid-template-columns: 1.4fr .9fr .8fr 1fr 1fr auto;
-    gap: 6px; margin-bottom: 6px; align-items: center;
+  input::placeholder { color: #4a4f57; }
+
+  /* Строки материалов / оборудования / работников */
+  .row-materials {
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.6fr 34px;
+    gap: 6px; margin-bottom: 6px;
   }
-  .material-row input, .equipment-row input { font-size: 12px; padding: 6px 8px; }
+  .row-equipment {
+    display: grid; grid-template-columns: 1.4fr .8fr .8fr 1.1fr 1fr 34px;
+    gap: 6px; margin-bottom: 6px;
+  }
+  .row-workers {
+    display: grid; grid-template-columns: 1.8fr 1fr 1fr 34px;
+    gap: 6px; margin-bottom: 6px;
+  }
+  .row-materials input, .row-equipment input, .row-workers input {
+    font-size: 12px; padding: 6px 8px;
+  }
+  .rm-btn {
+    background: #2a1610; color: var(--danger);
+    border: 1px solid #5a2018;
+    cursor: pointer; font-size: 14px; font-weight: 700;
+    padding: 0; width: 34px;
+    transition: background .15s;
+  }
+  .rm-btn:hover { background: #4a1810; color: #fff; }
+
+  /* Кнопки */
   .btn {
-    background: #3b82f6; color: #fff; border: none; padding: 9px 15px;
-    border-radius: 8px; cursor: pointer; font-size: 14px;
+    background: var(--accent); color: #000;
+    border: none; padding: 10px 16px;
+    font-family: inherit; font-weight: 700;
+    letter-spacing: 2px; font-size: 11px; text-transform: uppercase;
+    cursor: pointer; transition: all .15s;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
   }
-  .btn:hover { background: #2563eb; }
-  .btn.secondary { background: #e2e8f0; color: #334155; }
-  .btn.secondary:hover { background: #cbd5e1; }
-  .btn.danger { background: #ef4444; }
-  .btn.danger:hover { background: #dc2626; }
-  .btn-small { padding: 6px 10px; font-size: 12px; }
-  .remove-btn {
-    background: #ef4444; color: #fff; border: none;
-    border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  .btn:hover { background: var(--accent-2); }
+  .btn.secondary {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--line-hi);
   }
+  .btn.secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.danger { background: transparent; color: var(--danger); border: 1px solid #5a2018; }
+  .btn.danger:hover { background: #2a1610; }
+  .btn-small { padding: 6px 10px; font-size: 10px; letter-spacing: 1.5px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* ================= РЕЗУЛЬТАТЫ ================= */
   .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
-    gap: 10px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap: 8px;
   }
   .stat {
-    background: #f8fafc; border-radius: 10px; padding: 12px;
-    border: 1px solid #e2e8f0;
+    background: #0b0c0e;
+    border: 1px solid var(--line);
+    padding: 12px 12px 12px 16px;
+    position: relative;
   }
-  .stat .label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
-  .stat .value { font-size: 18px; font-weight: 600; color: #0f172a; }
-  .stat.highlight { background: #eff6ff; border-color: #bfdbfe; }
-  .stat.highlight .value { color: #1d4ed8; }
-  .stat.dark { background: #1f2937; border-color: #1f2937; }
-  .stat.dark .label { color: #cbd5e1; }
-  .stat.dark .value { color: #fff; }
+  .stat::before {
+    content: ""; position: absolute; left: 0; top: 0;
+    width: 3px; height: 100%; background: var(--steel);
+  }
+  .stat .label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .stat .value {
+    font-size: 18px; font-weight: 700; color: var(--text);
+    letter-spacing: 0.5px;
+  }
+  .stat .sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .stat.accent::before { background: var(--accent); }
+  .stat.accent .value { color: var(--accent-2); }
+  .stat.dark { background: #000; border-color: var(--accent); }
+  .stat.dark::before { background: var(--accent); }
+  .stat.dark .value { color: var(--accent); font-size: 20px; }
+
+  /* ================= СОХРАНЕНИЯ ================= */
   .saved-item {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 0; border-bottom: 1px solid #e2e8f0;
+    padding: 10px 0; border-bottom: 1px dashed var(--line);
+    gap: 8px;
   }
   .saved-item:last-child { border-bottom: none; }
-  .saved-item .info { flex: 1; min-width: 0; }
   .saved-item .name {
-    font-weight: 600; font-size: 14px;
+    font-size: 13px; font-weight: 700;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .saved-item .date { font-size: 11px; color: #94a3b8; }
-  .actions { display: flex; gap: 6px; flex-shrink: 0; }
-  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .saved-item .date { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+  .saved-item .info { flex: 1; min-width: 0; }
+
+  /* ================= ГРАФИКИ ================= */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 700px) { .charts { grid-template-columns: 1fr; } }
-  .chart-wrap { position: relative; height: 340px; }
-  .empty { color: #94a3b8; font-size: 13px; text-align: center; padding: 16px; }
-  .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-  .sub { font-size: 12px; color: #64748b; }
-  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chart-wrap {
+    position: relative; height: 340px;
+    background: #0b0c0e;
+    border: 1px solid var(--line);
+    padding: 12px;
+  }
+
+  /* Заголовок секции */
+  .section-title {
+    font-size: 13px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--muted); margin: 24px 0 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::before, .section-title::after {
+    content: ""; flex: 1; height: 1px;
+    background: repeating-linear-gradient(90deg,
+      var(--line-hi) 0 8px, transparent 8px 16px);
+  }
+  .section-title .dot {
+    width: 8px; height: 8px; background: var(--accent);
+  }
+
+  footer {
+    margin-top: 30px; padding-top: 16px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; letter-spacing: 3px; color: var(--muted);
+    text-transform: uppercase;
+  }
+  footer .stamp {
+    border: 1px solid var(--accent); color: var(--accent);
+    padding: 2px 8px;
+  }
+  .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
+  .hint { font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 1px; }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>🧮 Калькулятор стоимости изделия</h1>
+<div class="wrap">
 
-  <div class="grid">
-    <!-- ЛЕВАЯ КОЛОНКА -->
-    <div>
-      <div class="card">
-        <h2>🔩 Расходные материалы <span class="sub">(на партию)</span></h2>
-        <div id="materials"></div>
-        <button class="btn secondary btn-small" onclick="addMaterial()">+ Добавить материал</button>
+  <!-- ===== ШАПКА с логотипом ===== -->
+  <header class="hero">
+    <div class="logo" title="ЦЕХ 73">
+      <!-- Строка 1: ЦЕХ -->
+      <div class="logo-row1">
+        <!-- Ц -->
+        <div class="glyph-tall">
+          <div class="C-v"></div>
+          <div class="C-v" style="margin-left:2px"></div>
+          <div class="C-v" style="height:8px; align-self:flex-end;"></div>
+        </div>
+        <!-- Е -->
+        <div class="glyph-tall">
+          <div class="C-v"></div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div class="b h"></div>
+            <div class="b sq" style="align-self:center;"></div>
+            <div class="b h"></div>
+          </div>
+        </div>
+        <!-- Х -->
+        <div class="X-shape"></div>
       </div>
-
-      <div class="card">
-        <h2>🛠️ Оборудование <span class="sub">(за партию)</span></h2>
-        <div id="equipment"></div>
-        <button class="btn secondary btn-small" onclick="addEquipment()">+ Добавить оборудование</button>
-        <div class="hint">
-          Энергия = часы × мощность × цена_кВт·ч.
-          Амортизация = (часы / ресурс) × стоимость.
+      <!-- Строка 2: 73 -->
+      <div class="logo-row2">
+        <div class="seven"></div>
+        <div class="three">
+          <div class="bar"></div><div class="col"></div>
+          <div class="bar"></div><div class="col"></div>
+          <div class="bar"></div><div class="col"></div>
         </div>
       </div>
     </div>
+    <div class="hero-info">
+      <div class="hero-title">Производственный расчёт</div>
+      <div class="hero-sub">Калькулятор себестоимости</div>
+      <div class="hero-tag">Industrial · Precision · Cost</div>
+    </div>
+  </header>
 
-    <!-- ПРАВАЯ КОЛОНКА -->
+  <div class="grid">
+    <!-- ===== ЛЕВАЯ КОЛОНКА ===== -->
     <div>
-      <div class="card">
-        <h2>⚙️ Параметры партии</h2>
-        <label>Прочая электроэнергия (освещение и т.п.), кВт·ч</label>
+      <div class="panel">
+        <h2>Расходные материалы <span class="tag">/ партия</span></h2>
+        <div id="materials"></div>
+        <button class="btn secondary btn-small" onclick="addMaterial()">+ Материал</button>
+      </div>
+
+      <div class="panel">
+        <h2>Оборудование <span class="tag">/ партия</span></h2>
+        <div id="equipment"></div>
+        <button class="btn secondary btn-small" onclick="addEquipment()">+ Оборудование</button>
+        <div class="hint">Энергия = часы × кВт × ₽/кВт·ч · Амортизация = (часы / ресурс) × цена</div>
+      </div>
+
+      <div class="panel">
+        <h2>Работники <span class="tag">/ партия</span></h2>
+        <div id="workers"></div>
+        <button class="btn secondary btn-small" onclick="addWorker()">+ Работник</button>
+        <div class="hint">Каждый работник — свои часы и своя ставка</div>
+      </div>
+    </div>
+
+    <!-- ===== ПРАВАЯ КОЛОНКА ===== -->
+    <div>
+      <div class="panel">
+        <h2>Параметры партии</h2>
+        <label>Прочая электроэнергия, кВт·ч</label>
         <input type="number" id="elec_kwh" step="0.01" value="0">
         <label>Цена электроэнергии, ₽/кВт·ч</label>
         <input type="number" id="elec_price" step="0.01" value="0">
-        <label>Рабочие часы на партию</label>
-        <input type="number" id="hours" step="0.01" value="0">
-        <label>Ставка, ₽/час</label>
-        <input type="number" id="rate" step="0.01" value="0">
         <label>Прочие расходы на партию, ₽</label>
         <input type="number" id="overhead" step="0.01" value="0">
         <label>Процент брака, %</label>
         <input type="number" id="defect" step="0.01" value="0" min="0" max="99">
         <label>Количество штук в партии</label>
         <input type="number" id="batch" step="1" value="1" min="1">
-        <div style="margin-top:14px">
-          <button class="btn" onclick="calculate()">Рассчитать</button>
+        <div class="btn-row">
+          <button class="btn" onclick="calculate()">РАССЧИТАТЬ</button>
         </div>
       </div>
 
-      <div class="card">
-        <h2>📊 Результаты</h2>
+      <div class="panel">
+        <h2>Результаты</h2>
         <div class="stats" id="results">
           <div class="empty">Нажмите «Рассчитать»</div>
         </div>
       </div>
 
-      <div class="card">
-        <h2>💾 Сохранить / экспорт</h2>
+      <div class="panel">
+        <h2>Сохранить / экспорт</h2>
         <label>Название расчёта</label>
-        <input type="text" id="save_name" placeholder="Например: Партия виджетов №1">
-        <div style="margin-top:12px" class="toolbar">
-          <button class="btn" onclick="saveCalc()">Сохранить в БД</button>
-          <button class="btn secondary" onclick="exportCurrent()">⬇ Экспорт JSON</button>
+        <input type="text" id="save_name" placeholder="Партия №1 / виджет">
+        <div class="btn-row">
+          <button class="btn" onclick="saveCalc()">СОХРАНИТЬ</button>
+          <button class="btn secondary" onclick="exportCurrent()">⬇ JSON</button>
         </div>
       </div>
 
-      <div class="card">
-        <h2>📁 Сохранённые расчёты</h2>
-        <div class="toolbar">
-          <button class="btn secondary btn-small" onclick="loadList()">Обновить</button>
+      <div class="panel">
+        <h2>Сохранённые расчёты</h2>
+        <div class="btn-row" style="margin-top:0; margin-bottom:10px">
+          <button class="btn secondary btn-small" onclick="loadList()">ОБНОВИТЬ</button>
           <button class="btn secondary btn-small"
                   onclick="document.getElementById('import_input').click()">
-            ⬆ Импорт JSON
+            ⬆ ИМПОРТ
           </button>
           <input type="file" id="import_input" accept=".json,application/json"
                  style="display:none" onchange="onImportChange(this)">
@@ -165,357 +444,101 @@
     </div>
   </div>
 
-  <div class="card">
-    <h2>📈 Инфографика</h2>
-    <div class="charts">
-      <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
-      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
-    </div>
+  <!-- ===== ГРАФИКИ ===== -->
+  <div class="section-title"><span class="dot"></span> ИНФОГРАФИКА <span class="dot"></span></div>
+  <div class="charts">
+    <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
   </div>
+
+  <footer>
+    <span>ЦЕХ 73 · производственный расчёт</span>
+    <span class="stamp">v1.2 · industrial</span>
+  </footer>
 </div>
 
 <script>
 let pieChart = null, barChart = null;
 
-/* ---------- Утилиты ---------- */
+// Если открыто внутри Telegram — развернуть
+try { window.Telegram?.WebApp?.expand(); } catch(e) {}
+
 function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
     .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-
 function fmt(n) {
   return Number(n).toLocaleString('ru-RU', {
     minimumFractionDigits: 2, maximumFractionDigits: 2
   }) + ' ₽';
 }
-
 function safeFilename(s) {
-  const cleaned = String(s || 'calculation')
+  return (String(s || 'calculation')
     .replace(/[\\/:*?"<>|]+/g, '_')
     .replace(/\s+/g, '_')
-    .slice(0, 80);
-  return cleaned || 'calculation';
+    .slice(0, 80)) || 'calculation';
 }
-
 function downloadJson(filename, obj) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-/* ---------- Материалы ---------- */
+/* ---------- Строки ---------- */
 function addMaterial(data = {}) {
   const div = document.createElement('div');
-  div.className = 'material-row';
+  div.className = 'row-materials';
   div.innerHTML = `
-    <input type="text"   name="name" placeholder="Название" value="${esc(data.name || '')}">
-    <input type="number" name="cost" placeholder="Цена, ₽" step="0.01" value="${esc(data.cost ?? '')}">
-    <input type="number" name="qty"  placeholder="Кол-во"   step="0.01" value="${esc(data.qty ?? '')}">
-    <input type="url"    name="link" placeholder="https://ссылка" value="${esc(data.link || '')}">
-    <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+    <input type="text" name="name" placeholder="Название" value="${esc(data.name||'')}">
+    <input type="number" name="cost" placeholder="₽" step="0.01" value="${esc(data.cost??'')}">
+    <input type="number" name="qty"  placeholder="Кол." step="0.01" value="${esc(data.qty??'')}">
+    <input type="url" name="link" placeholder="https://" value="${esc(data.link||'')}">
+    <button class="rm-btn" onclick="this.parentElement.remove()">×</button>
   `;
   document.getElementById('materials').appendChild(div);
 }
 
-/* ---------- Оборудование ---------- */
 function addEquipment(data = {}) {
   const div = document.createElement('div');
-  div.className = 'equipment-row';
+  div.className = 'row-equipment';
   div.innerHTML = `
-    <input type="text"   name="name"     placeholder="Название"          value="${esc(data.name || '')}">
-    <input type="number" name="hours"    placeholder="Часы" step="0.01"  value="${esc(data.hours ?? '')}">
-    <input type="number" name="power"    placeholder="кВт"  step="0.01"  value="${esc(data.power ?? '')}">
-    <input type="number" name="price"    placeholder="Стоимость, ₽" step="0.01" value="${esc(data.price ?? '')}">
-    <input type="number" name="lifetime" placeholder="Ресурс, ч" step="1"
-           value="${esc(data.lifetime ?? 10000)}">
-    <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+    <input type="text"   name="name" placeholder="Название" value="${esc(data.name||'')}">
+    <input type="number" name="hours" placeholder="Часы" step="0.01" value="${esc(data.hours??'')}">
+    <input type="number" name="power" placeholder="кВт" step="0.01" value="${esc(data.power??'')}">
+    <input type="number" name="price" placeholder="Стоимость ₽" step="0.01" value="${esc(data.price??'')}">
+    <input type="number" name="lifetime" placeholder="Ресурс, ч" step="1" value="${esc(data.lifetime??10000)}">
+    <button class="rm-btn" onclick="this.parentElement.remove()">×</button>
   `;
   document.getElementById('equipment').appendChild(div);
 }
 
-/* ---------- Сбор / заполнение данных ---------- */
+function addWorker(data = {}) {
+  const div = document.createElement('div');
+  div.className = 'row-workers';
+  div.innerHTML = `
+    <input type="text"   name="name" placeholder="Имя / роль" value="${esc(data.name||'')}">
+    <input type="number" name="hours" placeholder="Часы" step="0.01" value="${esc(data.hours??'')}">
+    <input type="number" name="rate"  placeholder="₽/час" step="0.01" value="${esc(data.rate??'')}">
+    <button class="rm-btn" onclick="this.parentElement.remove()">×</button>
+  `;
+  document.getElementById('workers').appendChild(div);
+}
+
+/* ---------- Сбор данных ---------- */
 function getData() {
   const materials = [];
-  document.querySelectorAll('#materials .material-row').forEach(row => {
+  document.querySelectorAll('#materials .row-materials').forEach(r => {
     materials.push({
-      name: row.querySelector('[name=name]').value,
-      cost: row.querySelector('[name=cost]').value,
-      qty:  row.querySelector('[name=qty]').value,
-      link: row.querySelector('[name=link]').value,
+      name: r.querySelector('[name=name]').value,
+      cost: r.querySelector('[name=cost]').value,
+      qty:  r.querySelector('[name=qty]').value,
+      link: r.querySelector('[name=link]').value,
     });
   });
-
   const equipment = [];
-  document.querySelectorAll('#equipment .equipment-row').forEach(row => {
+  document.querySelectorAll('#equipment .row-equipment').forEach(r => {
     equipment.push({
-      name:     row.querySelector('[name=name]').value,
-      hours:    row.querySelector('[name=hours]').value,
-      power:    row.querySelector('[name=power]').value,
-      price:    row.querySelector('[name=price]').value,
-      lifetime: row.querySelector('[name=lifetime]').value,
-    });
-  });
-
-  return {
-    materials, equipment,
-    elec_kwh:   document.getElementById('elec_kwh').value,
-    elec_price: document.getElementById('elec_price').value,
-    hours:      document.getElementById('hours').value,
-    rate:       document.getElementById('rate').value,
-    overhead:   document.getElementById('overhead').value,
-    defect:     document.getElementById('defect').value,
-    batch:      document.getElementById('batch').value,
-  };
-}
-
-function setFormData(d = {}) {
-  document.getElementById('materials').innerHTML = '';
-  (d.materials || []).forEach(m => addMaterial(m));
-  if (!(d.materials || []).length) addMaterial();
-
-  document.getElementById('equipment').innerHTML = '';
-  (d.equipment || []).forEach(e => addEquipment(e));
-
-  ['elec_kwh','elec_price','hours','rate','overhead','defect','batch'].forEach(k => {
-    document.getElementById(k).value = d[k] ?? '';
-  });
-}
-
-/* ---------- Расчёт ---------- */
-async function calculate() {
-  const res = await fetch('/api/calculate', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(getData()),
-  });
-  const r = await res.json();
-  if (!res.ok) { alert(r.error || 'Ошибка расчёта'); return; }
-  renderResults(r);
-  renderCharts(r);
-}
-
-function renderResults(r) {
-  document.getElementById('results').innerHTML = `
-    <div class="stat">
-      <div class="label">Материалы (партия)</div>
-      <div class="value">${fmt(r.materials_cost)}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Электроэнергия (партия)</div>
-      <div class="value">${fmt(r.electricity)}</div>
-      <div class="sub">${r.total_energy_kwh} кВт·ч</div>
-    </div>
-    <div class="stat">
-      <div class="label">Амортизация (партия)</div>
-      <div class="value">${fmt(r.depreciation)}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Оплата труда (партия)</div>
-      <div class="value">${fmt(r.labor)}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Прочие (партия)</div>
-      <div class="value">${fmt(r.overhead)}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Итого затрат на партию</div>
-      <div class="value">${fmt(r.total_batch)}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Себестоимость 1 шт</div>
-      <div class="value">${fmt(r.per_unit)}</div>
-      <div class="sub">итог партии / ${r.batch} шт</div>
-    </div>
-    <div class="stat">
-      <div class="label">1 шт с учётом брака</div>
-      <div class="value">${fmt(r.per_good_unit)}</div>
-    </div>
-    <div class="stat dark">
-      <div class="label">Партия с учётом брака</div>
-      <div class="value">${fmt(r.total_with_defect)}</div>
-    </div>
-  `;
-}
-
-/* ---------- Графики ---------- */
-function renderCharts(r) {
-  const labels = ['Материалы', 'Электроэнергия', 'Амортизация', 'Труд', 'Прочие', 'Брак'];
-  const values = [r.materials_cost, r.electricity, r.depreciation,
-                  r.labor, r.overhead, r.defect_cost];
-  const colors = ['#3b82f6', '#f59e0b', '#a855f7', '#10b981', '#8b5cf6', '#ef4444'];
-
-  if (pieChart) pieChart.destroy();
-  pieChart = new Chart(document.getElementById('pieChart'), {
-    type: 'doughnut',
-    data: { labels, datasets: [{
-      data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff'
-    }]},
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        title: { display: true, text: 'Структура затрат на партию (с браком)' }
-      }
-    }
-  });
-
-  const matLabels = r.per_material.map(m => m.name);
-  const matValues = r.per_material.map(m => m.cost);
-
-  if (barChart) barChart.destroy();
-  barChart = new Chart(document.getElementById('barChart'), {
-    type: 'bar',
-    data: {
-      labels: matLabels,
-      datasets: [{
-        label: 'Стоимость на партию, ₽',
-        data: matValues, backgroundColor: '#3b82f6', borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        title: { display: true, text: 'Стоимость материалов (за партию)' }
-      },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-}
-
-/* ---------- Сохранение ---------- */
-async function saveCalc() {
-  const name = document.getElementById('save_name').value;
-  const res = await fetch('/api/save', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ name, data: getData() }),
-  });
-  const r = await res.json();
-  if (res.ok) {
-    document.getElementById('save_name').value = '';
-    loadList();
-    alert('Сохранено: ' + r.name);
-  } else {
-    alert('Ошибка сохранения');
-  }
-}
-
-async function loadList() {
-  const res = await fetch('/api/list');
-  const items = await res.json();
-  const el = document.getElementById('saved_list');
-  if (!items.length) { el.innerHTML = '<div class="empty">Список пуст</div>'; return; }
-  el.innerHTML = '';
-  items.forEach(it => {
-    const div = document.createElement('div');
-    div.className = 'saved-item';
-    div.innerHTML = `
-      <div class="info">
-        <div class="name">${esc(it.name)}</div>
-        <div class="date">${esc(it.created_at)}</div>
-      </div>
-      <div class="actions">
-        <button class="btn btn-small" onclick="loadCalc(${it.id})" title="Загрузить">Загрузить</button>
-        <button class="btn btn-small secondary" onclick="exportSaved(${it.id})" title="Экспорт">⬇</button>
-        <button class="btn btn-small danger" onclick="deleteCalc(${it.id})" title="Удалить">×</button>
-      </div>
-    `;
-    el.appendChild(div);
-  });
-}
-
-async function loadCalc(id) {
-  const res = await fetch('/api/load/' + id);
-  const item = await res.json();
-  if (!res.ok) { alert('Не найдено'); return; }
-  setFormData(item.data || {});
-  document.getElementById('save_name').value = item.name;
-  calculate();
-}
-
-async function deleteCalc(id) {
-  if (!confirm('Удалить расчёт?')) return;
-  await fetch('/api/delete/' + id, { method: 'DELETE' });
-  loadList();
-}
-
-/* ---------- ЭКСПОРТ ---------- */
-function buildExportPayload(name, data) {
-  return {
-    type: 'product_cost_calc',
-    version: 1,
-    exported_at: new Date().toISOString(),
-    name: name || 'Расчёт',
-    data,
-  };
-}
-
-function exportCurrent() {
-  const name = document.getElementById('save_name').value.trim() || 'Расчёт';
-  const payload = buildExportPayload(name, getData());
-  downloadJson(safeFilename(name) + '.json', payload);
-}
-
-async function exportSaved(id) {
-  const res = await fetch('/api/load/' + id);
-  const item = await res.json();
-  if (!res.ok) { alert('Не найдено'); return; }
-  const payload = buildExportPayload(item.name, item.data || {});
-  downloadJson(safeFilename(item.name) + '.json', payload);
-}
-
-/* ---------- ИМПОРТ ---------- */
-async function onImportChange(input) {
-  const file = input.files && input.files[0];
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const obj = JSON.parse(text);
-
-    // Поддерживаем и «обёрнутый» формат (type+data), и «сырые» данные
-    if (obj && obj.type && obj.type !== 'product_cost_calc') {
-      throw new Error('Файл не является экспортом этого калькулятора');
-    }
-    const data = (obj && obj.data) ? obj.data : obj;
-    if (!data || typeof data !== 'object') {
-      throw new Error('Неверная структура файла');
-    }
-
-    setFormData(data);
-    document.getElementById('save_name').value = (obj && obj.name) || '';
-    calculate();
-  } catch (err) {
-    alert('Ошибка импорта: ' + err.message);
-  } finally {
-    // сброс, чтобы можно было импортировать тот же файл повторно
-    input.value = '';
-  }
-}
-
-/* ---------- Авторасчёт ---------- */
-let t;
-document.body.addEventListener('input', (e) => {
-  if (e.target.tagName === 'INPUT' && e.target.id !== 'save_name'
-      && e.target.type !== 'file') {
-    clearTimeout(t);
-    t = setTimeout(calculate, 400);
-  }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  addMaterial();
-  addEquipment();
-  loadList();
-  calculate();
-});
-</script>
-</body>
-</html>
