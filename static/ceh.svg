@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 612 792">
+  <defs>
+    <style>
+      .cls-1{fill:#5d5c5b}
+      .cls-2{fill:#000000}
+      .cls-3{fill:#e44438}
+    </style>
+  </defs>
+  <title>Artboard 1</title>
+  <g id="Layer_1" data-name="Layer 1">
+    <g id="Layer_2" data-name="Layer 2" data-vc-layer="sublayer">
+      <rect x="175.71" y="194.155" width="16" height="108" class="cls-1"/>
+      <path d="M183.397 216.224" class="cls-2"/>
+      <rect x="222.981" y="194.203" width="16" height="108" class="cls-1"/>
+      <rect x="246.616" y="286.836" width="16" height="40" class="cls-1"/>
+      <rect x="199.345" y="286.155" width="16" height="16" class="cls-1"/>
+      <polygon points="359.352,194.155 423.92,302.203 441.614,302.203 377.423,194.155" class="cls-1"/>
+      <polygon points="376.26,302.155 358.375,302.155 387.03,255.788 395.243,268.963" class="cls-1"/>
+      <path d="M397.586 265.214" class="cls-1"/>
+      <polygon points="422.271,194.155 440.106,194.155 413.049,238.719 404.761,225.425" class="cls-1"/>
+      <path d="M428.516 201.765" class="cls-3"/>
+    </g>
+    <g id="Layer_3" data-name="Layer 3" data-vc-layer="sublayer">
+      <rect x="188.308" y="366.857" width="100" height="24" class="cls-1"/>
+      <polygon points="288.308,390.857 297.524,390.857 305.738,366.857 288.308,366.857" class="cls-1"/>
+      <polygon points="264.85,402.857 293.463,402.857 244.834,544.452 216.014,544.452" class="cls-1"/>
+      <rect x="326.382" y="366.857" width="64" height="24" class="cls-1"/>
+      <rect x="326.382" y="520.452" width="64" height="24" class="cls-1"/>
+      <rect x="358.375" y="443.586" width="32" height="24" class="cls-1"/>
+      <rect x="406" y="366.857" width="24" height="177.595" class="cls-1"/>
+    </g>
+    <g id="Layer_4" data-name="Layer 4" data-vc-layer="sublayer">
+      <rect x="302.342" y="194.059" width="40" height="16" class="cls-1"/>
+      <rect x="278.65" y="194.107" width="16" height="108" class="cls-1"/>
+      <rect x="302.342" y="240.059" width="40" height="16" class="cls-1"/>
+      <rect x="302.342" y="286.107" width="40" height="16" class="cls-1"/>
+    </g>
+    <g id="Layer_5" data-name="Layer 5" data-vc-layer="sublayer">
+      <polygon points="359.352,194.107 423.92,302.155 441.614,302.155 377.423,194.107" class="cls-1"/>
+      <polygon points="376.26,302.107 358.375,302.107 387.03,255.74 395.243,268.915" class="cls-1"/>
+      <polygon points="422.271,194.107 440.106,194.107 413.049,238.671 404.761,225.377" class="cls-1"/>
+    </g>
+  </g>
+</svg>
