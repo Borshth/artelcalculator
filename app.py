@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, jsonify
-import sqlite3, json
+import sqlite3, json, os
 from datetime import datetime
 
 app = Flask(__name__)
-DB = 'calculations.db'
+DB = os.environ.get('DATABASE_URL', 'calculations.db')
 
 
 def get_db():
@@ -20,7 +20,6 @@ def init_db():
             created_at TEXT NOT NULL,
             data TEXT NOT NULL
         )''')
-    print("DB ready")
 
 
 init_db()
@@ -53,11 +52,11 @@ def calculate():
         for m in materials
     ]
 
-    # --- Электроэнергия (общая, не из оборудования) ---
+    # --- Электроэнергия общего назначения ---
     elec_kwh = f(d.get('elec_kwh'))
     elec_price = f(d.get('elec_price'))
 
-    # --- Оборудование: энергия + амортизация ---
+    # --- Оборудование ---
     equipment = d.get('equipment', [])
     equipment_energy_kwh = 0.0
     equipment_energy_cost = 0.0
@@ -89,10 +88,22 @@ def calculate():
     total_energy_kwh = elec_kwh + equipment_energy_kwh
     electricity = total_energy_kwh * elec_price
 
-    # --- Труд, прочие ---
-    hours = f(d.get('hours'))
-    rate  = f(d.get('rate'))
-    labor = hours * rate
+    # --- РАБОТНИКИ (новое) ---
+    workers = d.get('workers', [])
+    labor = 0.0
+    worker_rows = []
+    for w in workers:
+        h = f(w.get('hours'))
+        r = f(w.get('rate'))
+        cost = h * r
+        labor += cost
+        worker_rows.append({
+            'name': w.get('name') or 'Работник',
+            'hours': h,
+            'rate': r,
+            'cost': round(cost, 2),
+        })
+
     overhead = f(d.get('overhead'))
 
     # --- Партия и брак ---
@@ -102,19 +113,14 @@ def calculate():
     if defect >= 1: defect = 0.99
     if batch < 1:   batch = 1
 
-    # Итог по партии (все затраты на изготовление партии)
     total_batch = (materials_cost + electricity + labor
                    + overhead + depreciation)
-
-    # Себестоимость 1 шт (без учёта брака) = итог партии / кол-во штук
     per_unit = total_batch / batch
-
-    # С учётом брака — делим ещё на (1 - брак)
     per_good_unit = per_unit / (1 - defect) if defect > 0 else per_unit
-
-    # Общая стоимость изготовления партии годных изделий
     total_with_defect = total_batch / (1 - defect) if defect > 0 else total_batch
     defect_cost = total_with_defect - total_batch
+
+    total_hours = sum(w['hours'] for w in worker_rows)
 
     return jsonify({
         'materials_cost':   round(materials_cost, 2),
@@ -123,17 +129,17 @@ def calculate():
         'depreciation':     round(depreciation, 2),
         'labor':            round(labor, 2),
         'overhead':         round(overhead, 2),
-
-        'total_batch':      round(total_batch, 2),          # затраты на партию
-        'per_unit':         round(per_unit, 2),             # себестоимость 1 шт
-        'per_good_unit':    round(per_good_unit, 2),        # 1 шт с учётом брака
-        'total_with_defect': round(total_with_defect, 2),   # партия с браком
+        'total_batch':      round(total_batch, 2),
+        'per_unit':         round(per_unit, 2),
+        'per_good_unit':    round(per_good_unit, 2),
+        'total_with_defect': round(total_with_defect, 2),
         'defect_cost':      round(defect_cost, 2),
-
         'batch':  batch,
         'total_energy_kwh': round(total_energy_kwh, 3),
+        'total_hours': round(total_hours, 2),
         'per_material':    per_material,
         'equipment_rows':  equipment_rows,
+        'worker_rows':     worker_rows,
     })
 
 
@@ -167,8 +173,7 @@ def load(cid):
     if not row:
         return jsonify({'error': 'not found'}), 404
     return jsonify({
-        'id': row['id'],
-        'name': row['name'],
+        'id': row['id'], 'name': row['name'],
         'created_at': row['created_at'],
         'data': json.loads(row['data']),
     })
