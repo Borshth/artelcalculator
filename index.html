@@ -6,134 +6,14 @@
 <title>ЦЕХ 73 — Калькулятор</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  /* ================= ИНДУСТРИАЛЬНАЯ ТЕМА ================= */
-  :root {
-    --bg: #0f0f10; --panel: #17181a; --line: #2a2d33; --line-hi: #3a3e46;
-    --text: #e6e6e6; --muted: #8a8f98; --accent: #ff6a00; --accent-2: #ffb300;
-    --danger: #ef4444; --steel: #5a616b;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 0;
-    background: repeating-linear-gradient(45deg, #0f0f10 0 12px, #121214 12px 24px), var(--bg);
-    color: var(--text); font-family: "Consolas", "JetBrains Mono", monospace;
-    font-size: 14px; min-height: 100vh;
-  }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 40px; }
-
-  /* ================= HEADER с логотипом ================= */
-  header.hero {
-    border: 2px solid var(--line-hi); background: linear-gradient(180deg, #1b1c20 0%, #141518 100%);
-    padding: 18px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 24px;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
-  }
-  .logo-img { height: 60px; width: auto; object-fit: contain; }
-  .hero-info { flex: 1; }
-  .hero-title { font-size: 12px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-  .hero-sub { font-size: 20px; font-weight: 700; color: var(--text); text-transform: uppercase; }
-  .hero-tag { display: inline-block; margin-top: 6px; font-size: 10px; letter-spacing: 3px; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; }
-
-  /* ================= СЕТКА / ПАНЕЛИ ================= */
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .panel {
-    background: var(--panel); border: 1px solid var(--line); position: relative; padding: 16px;
-    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); margin-bottom: 16px;
-  }
-  .panel::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--accent); }
-  .panel h2 { margin: 0 0 12px; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .panel h2::after { content: ""; flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--line-hi) 0 6px, transparent 6px 12px); }
-
-  /* Поля ввода */
-  label { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
-  input, select {
-    width: 100%; padding: 8px 10px; background: #0b0c0e; color: var(--text);
-    border: 1px solid var(--line-hi); font-family: inherit; font-size: 13px; transition: border-color .15s;
-  }
-  input:focus { outline: none; border-color: var(--accent); }
-  input::placeholder { color: #4a4f57; }
-
-  /* Строки */
-  .row-materials { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.6fr 34px; gap: 6px; margin-bottom: 6px; }
-  .row-equipment { display: grid; grid-template-columns: 1.4fr .8fr .8fr 1.1fr 1fr 34px; gap: 6px; margin-bottom: 6px; }
-  .row-workers { display: grid; grid-template-columns: 1.8fr 1fr 1fr 34px; gap: 6px; margin-bottom: 6px; }
-  .row-materials input, .row-equipment input, .row-workers input { font-size: 12px; padding: 6px 8px; }
-  
-  .rm-btn {
-    background: #2a1610; color: var(--danger); border: 1px solid #5a2018;
-    cursor: pointer; font-size: 14px; font-weight: 700; padding: 0; width: 34px;
-  }
-  .rm-btn:hover { background: #4a1810; }
-
-  /* Кнопки */
-  .btn {
-    background: var(--accent); color: #000; border: none; padding: 10px 16px;
-    font-family: inherit; font-weight: 700; letter-spacing: 2px; font-size: 11px; text-transform: uppercase;
-    cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-  }
-  .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line-hi); }
-  .btn.danger { background: transparent; color: var(--danger); border: 1px solid #5a2018; }
-  .btn-small { padding: 6px 10px; font-size: 10px; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-
-  /* Результаты */
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
-  .stat { background: #0b0c0e; border: 1px solid var(--line); padding: 12px 12px 12px 16px; position: relative; }
-  .stat::before { content: ""; position: absolute; left: 0; top: 0; width: 3px; height: 100%; background: var(--steel); }
-  .stat .label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .stat .value { font-size: 16px; font-weight: 700; color: var(--text); }
-  .stat .sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
-  .stat.accent::before { background: var(--accent); }
-  .stat.accent .value { color: var(--accent-2); }
-  .stat.dark { background: #000; border-color: var(--accent); }
-  .stat.dark .value { color: var(--accent); font-size: 18px; }
-
-  /* Сохранения */
-  .saved-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--line); }
-  .saved-item .name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .saved-item .date { font-size: 10px; color: var(--muted); }
-  
-  /* Графики */
-  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .chart-wrap { position: relative; height: 300px; background: #0b0c0e; border: 1px solid var(--line); padding: 12px; }
-
-  footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
-  .hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
-  .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
-
-  /* ================= МОБИЛЬНАЯ АДАПТАЦИЯ (ИСПРАВЛЕНИЕ) ================= */
-  @media (max-width: 650px) {
-    .grid, .charts { grid-template-columns: 1fr; }
-    .row-materials, .row-equipment, .row-workers {
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 12px;
-    }
-    /* Названия и ссылки на всю ширину */
-    .row-materials input[name="name"], .row-materials input[name="link"],
-    .row-equipment input[name="name"],
-    .row-workers input[name="name"] {
-      grid-column: span 2;
-    }
-    .rm-btn { grid-column: span 2; width: 100%; padding: 8px; margin-top: 4px; }
-    /* Увеличиваем шрифт до 16px, чтобы iOS не ломал зум */
-    input { font-size: 16px !important; padding: 10px !important; }
-    .hero { flex-direction: column; text-align: center; gap: 12px; }
-    .saved-item { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .saved-item .actions { width: 100%; display: flex; gap: 8px; }
-    .saved-item .actions button { flex: 1; }
-  }
-</style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- ШАПКА -->
+  <!-- ===== ШАПКА ===== -->
   <header class="hero">
-    <!-- Ваш логотип -->
-    <img src="/static/ceh.svg" alt="ЦЕХ 73" class="logo-img">
+    <img src="ceh.svg" alt="ЦЕХ 73" class="logo-img"
+         onerror="this.style.display='none'">
     <div class="hero-info">
       <div class="hero-title">Производственный расчёт</div>
       <div class="hero-sub">Калькулятор себестоимости</div>
@@ -161,7 +41,7 @@
         <h2>Работники <span>/ партия</span></h2>
         <div id="workers"></div>
         <button class="btn secondary btn-small" onclick="addWorker()">+ Работник</button>
-        <div class="hint">Для каждого работника указываются его часы и ставка</div>
+        <div class="hint">Для каждого работника — свои часы и ставка</div>
       </div>
     </div>
 
@@ -205,8 +85,10 @@
         <h2>Сохранённые расчёты</h2>
         <div class="btn-row" style="margin-top:0; margin-bottom:10px">
           <button class="btn secondary btn-small" onclick="loadList()">ОБНОВИТЬ</button>
-          <button class="btn secondary btn-small" onclick="document.getElementById('import_input').click()">⬆ ИМПОРТ</button>
-          <input type="file" id="import_input" accept=".json" style="display:none" onchange="onImportChange(this)">
+          <button class="btn secondary btn-small"
+                  onclick="document.getElementById('import_input').click()">⬆ ИМПОРТ</button>
+          <input type="file" id="import_input" accept=".json" style="display:none"
+                 onchange="onImportChange(this)">
         </div>
         <div id="saved_list"><div class="empty">Список пуст</div></div>
       </div>
@@ -221,20 +103,33 @@
 
   <footer>
     <span>ЦЕХ 73 · производственный расчёт</span>
-    <span>v1.3 · industrial</span>
+    <span>v2.0 · offline</span>
   </footer>
 </div>
 
 <script>
+  /* ==================== ЦЕХ 73 — клиентский калькулятор ==================== */
+const STORAGE_KEY = 'ceh73_saves_v1';
 let pieChart = null, barChart = null;
 
-try { window.Telegram?.WebApp?.expand(); } catch(e) {}
+try { window.Telegram?.WebApp?.expand(); } catch (e) {}
 
+/* ---------- Утилиты ---------- */
 function esc(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 function fmt(n) {
-  return Number(n).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+  return Number(n).toLocaleString('ru-RU', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }) + ' ₽';
+}
+function num(x) { const v = parseFloat(x); return isNaN(v) ? 0 : v; }
+function safeFilename(s) {
+  return (String(s || 'calculation')
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .replace(/\s+/g, '_')
+    .slice(0, 80)) || 'calculation';
 }
 function downloadJson(filename, obj) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
@@ -245,16 +140,16 @@ function downloadJson(filename, obj) {
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-/* ---------- Строки ---------- */
+/* ---------- Строки: материалы / оборудование / работники ---------- */
 function addMaterial(data = {}) {
   const div = document.createElement('div');
   div.className = 'row-materials';
   div.innerHTML = `
-    <input type="text" name="name" placeholder="Название" value="${esc(data.name||'')}">
+    <input type="text"   name="name" placeholder="Название" value="${esc(data.name||'')}">
     <input type="number" name="cost" placeholder="₽" step="0.01" value="${esc(data.cost??'')}" inputmode="decimal">
     <input type="number" name="qty"  placeholder="Кол." step="0.01" value="${esc(data.qty??'')}" inputmode="decimal">
-    <input type="url" name="link" placeholder="https://" value="${esc(data.link||'')}">
-    <button class="rm-btn" onclick="this.parentElement.remove()">×</button>
+    <input type="url"    name="link" placeholder="https://" value="${esc(data.link||'')}">
+    <button class="rm-btn" onclick="this.parentElement.remove(); calculate()">×</button>
   `;
   document.getElementById('materials').appendChild(div);
 }
@@ -268,7 +163,7 @@ function addEquipment(data = {}) {
     <input type="number" name="power" placeholder="кВт" step="0.01" value="${esc(data.power??'')}" inputmode="decimal">
     <input type="number" name="price" placeholder="Стоимость ₽" step="0.01" value="${esc(data.price??'')}" inputmode="decimal">
     <input type="number" name="lifetime" placeholder="Ресурс, ч" step="1" value="${esc(data.lifetime??10000)}" inputmode="numeric">
-    <button class="rm-btn" onclick="this.parentElement.remove()">×</button>
+    <button class="rm-btn" onclick="this.parentElement.remove(); calculate()">×</button>
   `;
   document.getElementById('equipment').appendChild(div);
 }
@@ -280,33 +175,48 @@ function addWorker(data = {}) {
     <input type="text"   name="name" placeholder="Имя / роль" value="${esc(data.name||'')}">
     <input type="number" name="hours" placeholder="Часы" step="0.01" value="${esc(data.hours??'')}" inputmode="decimal">
     <input type="number" name="rate"  placeholder="₽/час" step="0.01" value="${esc(data.rate??'')}" inputmode="decimal">
-    <button class="rm-btn" onclick="this.parentElement.remove()">×</button>
+    <button class="rm-btn" onclick="this.parentElement.remove(); calculate()">×</button>
   `;
   document.getElementById('workers').appendChild(div);
 }
 
-/* ---------- Сбор данных ---------- */
+/* ---------- Сбор / заполнение формы ---------- */
 function getData() {
   const materials = [];
   document.querySelectorAll('#materials .row-materials').forEach(r => {
-    materials.push({ name: r.querySelector('[name=name]').value, cost: r.querySelector('[name=cost]').value, qty: r.querySelector('[name=qty]').value, link: r.querySelector('[name=link]').value });
+    materials.push({
+      name: r.querySelector('[name=name]').value,
+      cost: r.querySelector('[name=cost]').value,
+      qty:  r.querySelector('[name=qty]').value,
+      link: r.querySelector('[name=link]').value,
+    });
   });
   const equipment = [];
   document.querySelectorAll('#equipment .row-equipment').forEach(r => {
-    equipment.push({ name: r.querySelector('[name=name]').value, hours: r.querySelector('[name=hours]').value, power: r.querySelector('[name=power]').value, price: r.querySelector('[name=price]').value, lifetime: r.querySelector('[name=lifetime]').value });
+    equipment.push({
+      name:     r.querySelector('[name=name]').value,
+      hours:    r.querySelector('[name=hours]').value,
+      power:    r.querySelector('[name=power]').value,
+      price:    r.querySelector('[name=price]').value,
+      lifetime: r.querySelector('[name=lifetime]').value,
+    });
   });
   const workers = [];
   document.querySelectorAll('#workers .row-workers').forEach(r => {
-    workers.push({ name: r.querySelector('[name=name]').value, hours: r.querySelector('[name=hours]').value, rate: r.querySelector('[name=rate]').value });
+    workers.push({
+      name:  r.querySelector('[name=name]').value,
+      hours: r.querySelector('[name=hours]').value,
+      rate:  r.querySelector('[name=rate]').value,
+    });
   });
 
   return {
     materials, equipment, workers,
-    elec_kwh: document.getElementById('elec_kwh').value,
+    elec_kwh:   document.getElementById('elec_kwh').value,
     elec_price: document.getElementById('elec_price').value,
-    overhead: document.getElementById('overhead').value,
-    defect: document.getElementById('defect').value,
-    batch: document.getElementById('batch').value,
+    overhead:   document.getElementById('overhead').value,
+    defect:     document.getElementById('defect').value,
+    batch:      document.getElementById('batch').value,
   };
 }
 
@@ -327,15 +237,72 @@ function setFormData(d = {}) {
   });
 }
 
-/* ---------- Расчёт ---------- */
-async function calculate() {
-  const res = await fetch('/api/calculate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(getData()) });
-  const r = await res.json();
-  if (!res.ok) return;
+/* ---------- РАСЧЁТ (полностью на клиенте) ---------- */
+function calculateLocal(d) {
+  const materials = d.materials || [];
+  const materials_cost = materials.reduce(
+    (s, m) => s + num(m.cost) * num(m.qty), 0);
+  const per_material = materials.map(m => ({
+    name: m.name || 'Без названия',
+    cost: +(num(m.cost) * num(m.qty)).toFixed(2),
+    link: m.link || '',
+  }));
+
+  const elec_kwh   = num(d.elec_kwh);
+  const elec_price = num(d.elec_price);
+
+  const equipment = d.equipment || [];
+  let equipment_energy_kwh = 0;
+  let depreciation = 0;
+  equipment.forEach(e => {
+    const h = num(e.hours), p = num(e.power);
+    const pr = num(e.price), life = num(e.lifetime);
+    equipment_energy_kwh += h * p;
+    if (life > 0 && pr > 0 && h > 0) depreciation += (h / life) * pr;
+  });
+
+  const total_energy_kwh = elec_kwh + equipment_energy_kwh;
+  const electricity = total_energy_kwh * elec_price;
+
+  const workers = d.workers || [];
+  const labor = workers.reduce((s, w) => s + num(w.hours) * num(w.rate), 0);
+
+  const overhead = num(d.overhead);
+
+  let defect = num(d.defect) / 100;
+  let batch  = Math.max(1, Math.floor(num(d.batch)) || 1);
+  defect = Math.max(0, Math.min(defect, 0.99));
+
+  const total_batch      = materials_cost + electricity + labor + overhead + depreciation;
+  const per_unit         = total_batch / batch;
+  const per_good_unit    = defect > 0 ? per_unit / (1 - defect) : per_unit;
+  const total_with_defect = defect > 0 ? total_batch / (1 - defect) : total_batch;
+  const defect_cost      = total_with_defect - total_batch;
+
+  return {
+    materials_cost: +materials_cost.toFixed(2),
+    electricity:    +electricity.toFixed(2),
+    depreciation:   +depreciation.toFixed(2),
+    labor:          +labor.toFixed(2),
+    overhead:       +overhead.toFixed(2),
+    total_batch:    +total_batch.toFixed(2),
+    per_unit:       +per_unit.toFixed(2),
+    per_good_unit:  +per_good_unit.toFixed(2),
+    total_with_defect: +total_with_defect.toFixed(2),
+    defect_cost:    +defect_cost.toFixed(2),
+    batch,
+    total_energy_kwh: +total_energy_kwh.toFixed(3),
+    per_material,
+  };
+}
+
+function calculate() {
+  const r = calculateLocal(getData());
   renderResults(r);
   renderCharts(r);
 }
 
+/* ---------- Рендер результатов ---------- */
 function renderResults(r) {
   document.getElementById('results').innerHTML = `
     <div class="stat"><div class="label">Материалы</div><div class="value">${fmt(r.materials_cost)}</div></div>
@@ -359,32 +326,58 @@ function renderCharts(r) {
   if (pieChart) pieChart.destroy();
   pieChart = new Chart(document.getElementById('pieChart'), {
     type: 'doughnut',
-    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#17181a' }]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6e6e6' } } } }
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#17181a' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#e6e6e6' } } }
+    }
   });
 
   if (barChart) barChart.destroy();
   barChart = new Chart(document.getElementById('barChart'), {
     type: 'bar',
-    data: { labels: r.per_material.map(m => m.name), datasets: [{ label: 'Материалы (₽)', data: r.per_material.map(m => m.cost), backgroundColor: '#ff6a00', borderRadius: 4 }] },
+    data: {
+      labels: r.per_material.map(m => m.name),
+      datasets: [{ label: 'Материалы (₽)', data: r.per_material.map(m => m.cost), backgroundColor: '#ff6a00', borderRadius: 4 }]
+    },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { x: { ticks: { color: '#8a8f98' } }, y: { ticks: { color: '#8a8f98' }, beginAtZero: true } }
+      scales: {
+        x: { ticks: { color: '#8a8f98' } },
+        y: { ticks: { color: '#8a8f98' }, beginAtZero: true }
+      }
     }
   });
 }
 
-/* ---------- Сохранение ---------- */
-async function saveCalc() {
-  const name = document.getElementById('save_name').value;
-  const res = await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name, data: getData() }) });
-  if (res.ok) { document.getElementById('save_name').value = ''; loadList(); alert('Сохранено!'); }
+/* ==================== ХРАНИЛИЩЕ (localStorage) ==================== */
+function getSaves() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+function setSaves(arr) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
 }
 
-async function loadList() {
-  const res = await fetch('/api/list');
-  const items = await res.json();
+function saveCalc() {
+  const name = document.getElementById('save_name').value.trim()
+    || `Расчёт ${new Date().toLocaleString('ru-RU')}`;
+  const saves = getSaves();
+  saves.unshift({
+    id: Date.now(),
+    name,
+    created_at: new Date().toLocaleString('ru-RU'),
+    data: getData(),
+  });
+  setSaves(saves);
+  document.getElementById('save_name').value = '';
+  loadList();
+  alert('Сохранено: ' + name);
+}
+
+function loadList() {
+  const items = getSaves();
   const el = document.getElementById('saved_list');
   if (!items.length) { el.innerHTML = '<div class="empty">Список пуст</div>'; return; }
   el.innerHTML = '';
@@ -392,8 +385,11 @@ async function loadList() {
     const div = document.createElement('div');
     div.className = 'saved-item';
     div.innerHTML = `
-      <div class="info"><div class="name">${esc(it.name)}</div><div class="date">${esc(it.created_at)}</div></div>
-      <div class="actions" style="display:flex; gap:6px;">
+      <div class="info">
+        <div class="name">${esc(it.name)}</div>
+        <div class="date">${esc(it.created_at)}</div>
+      </div>
+      <div class="actions">
         <button class="btn btn-small" onclick="loadCalc(${it.id})">Загрузить</button>
         <button class="btn secondary btn-small" onclick="exportSaved(${it.id})">⬇</button>
         <button class="btn danger btn-small" onclick="deleteCalc(${it.id})">×</button>
@@ -403,45 +399,228 @@ async function loadList() {
   });
 }
 
-async function loadCalc(id) {
-  const res = await fetch('/api/load/' + id);
-  const item = await res.json();
-  if (res.ok) { setFormData(item.data || {}); document.getElementById('save_name').value = item.name; calculate(); }
+function loadCalc(id) {
+  const item = getSaves().find(x => x.id === id);
+  if (!item) return;
+  setFormData(item.data || {});
+  document.getElementById('save_name').value = item.name;
+  calculate();
 }
 
-async function deleteCalc(id) {
-  if (!confirm('Удалить?')) return;
-  await fetch('/api/delete/' + id, { method: 'DELETE' });
+function deleteCalc(id) {
+  if (!confirm('Удалить расчёт?')) return;
+  setSaves(getSaves().filter(x => x.id !== id));
   loadList();
 }
 
-/* ---------- Экспорт / Импорт ---------- */
-function buildExportPayload(name, data) { return { type: 'product_cost_calc', version: 1, name: name || 'Расчёт', data }; }
-function exportCurrent() { const name = document.getElementById('save_name').value || 'Расчёт'; downloadJson(name.replace(/\s+/g, '_') + '.json', buildExportPayload(name, getData())); }
-async function exportSaved(id) {
-  const res = await fetch('/api/load/' + id); const item = await res.json();
-  if (res.ok) downloadJson(item.name.replace(/\s+/g, '_') + '.json', buildExportPayload(item.name, item.data));
+/* ==================== ЭКСПОРТ / ИМПОРТ ==================== */
+function buildExportPayload(name, data) {
+  return { type: 'product_cost_calc', version: 2, name: name || 'Расчёт', data };
+}
+function exportCurrent() {
+  const name = document.getElementById('save_name').value || 'Расчёт';
+  downloadJson(safeFilename(name) + '.json', buildExportPayload(name, getData()));
+}
+function exportSaved(id) {
+  const item = getSaves().find(x => x.id === id);
+  if (!item) return;
+  downloadJson(safeFilename(item.name) + '.json', buildExportPayload(item.name, item.data));
 }
 async function onImportChange(input) {
-  const file = input.files && input.files[0]; if (!file) return;
+  const file = input.files && input.files[0];
+  if (!file) return;
   try {
-    const obj = JSON.parse(await file.text());
+    const text = await file.text();
+    const obj = JSON.parse(text);
+    if (obj && obj.type && obj.type !== 'product_cost_calc') {
+      throw new Error('Файл не от этого калькулятора');
+    }
     const data = obj.data ? obj.data : obj;
+    if (!data || typeof data !== 'object') throw new Error('Неверная структура');
     setFormData(data);
     document.getElementById('save_name').value = obj.name || '';
     calculate();
-  } catch (e) { alert('Ошибка импорта: ' + e.message); }
-  input.value = '';
+  } catch (err) {
+    alert('Ошибка импорта: ' + err.message);
+  } finally {
+    input.value = '';
+  }
 }
 
+/* ==================== АВТОРАСЧЁТ + СТАРТ ==================== */
 let t;
 document.body.addEventListener('input', (e) => {
   if (e.target.tagName === 'INPUT' && e.target.id !== 'save_name' && e.target.type !== 'file') {
-    clearTimeout(t); t = setTimeout(calculate, 500);
+    clearTimeout(t); t = setTimeout(calculate, 400);
   }
 });
 
-document.addEventListener('DOMContentLoaded', () => { addMaterial(); addEquipment(); addWorker(); loadList(); calculate(); });
+document.addEventListener('DOMContentLoaded', () => {
+  addMaterial(); addEquipment(); addWorker();
+  loadList();
+  calculate();
+});
 </script>
+<style>
+  /* ================= ИНДУСТРИАЛЬНАЯ ТЕМА ================= */
+:root {
+  --bg: #0f0f10; --panel: #17181a; --line: #2a2d33; --line-hi: #3a3e46;
+  --text: #e6e6e6; --muted: #8a8f98; --accent: #ff6a00; --accent-2: #ffb300;
+  --danger: #ef4444; --steel: #5a616b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  background: repeating-linear-gradient(45deg, #0f0f10 0 12px, #121214 12px 24px), var(--bg);
+  color: var(--text);
+  font-family: "Consolas", "JetBrains Mono", monospace;
+  font-size: 14px; min-height: 100vh;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 40px; }
+
+/* HEADER */
+header.hero {
+  border: 2px solid var(--line-hi);
+  background: linear-gradient(180deg, #1b1c20 0%, #141518 100%);
+  padding: 18px 20px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 24px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+}
+.logo-img { height: 60px; width: auto; object-fit: contain; }
+.hero-info { flex: 1; }
+.hero-title { font-size: 12px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+.hero-sub { font-size: 20px; font-weight: 700; color: var(--text); text-transform: uppercase; }
+.hero-tag {
+  display: inline-block; margin-top: 6px; font-size: 10px; letter-spacing: 3px;
+  color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px;
+}
+
+/* СЕТКА / ПАНЕЛИ */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.panel {
+  background: var(--panel); border: 1px solid var(--line);
+  position: relative; padding: 16px;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  margin-bottom: 16px;
+}
+.panel::before {
+  content: ""; position: absolute; left: 0; top: 0;
+  width: 4px; height: 100%; background: var(--accent);
+}
+.panel h2 {
+  margin: 0 0 12px; font-size: 12px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel h2 span { color: var(--accent); font-size: 10px; }
+.panel h2::after {
+  content: ""; flex: 1; height: 1px;
+  background: repeating-linear-gradient(90deg, var(--line-hi) 0 6px, transparent 6px 12px);
+}
+
+/* Поля */
+label {
+  display: block; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  margin: 10px 0 4px;
+}
+input, select {
+  width: 100%; padding: 8px 10px; background: #0b0c0e; color: var(--text);
+  border: 1px solid var(--line-hi);
+  font-family: inherit; font-size: 13px; transition: border-color .15s;
+}
+input:focus { outline: none; border-color: var(--accent); }
+input::placeholder { color: #4a4f57; }
+
+/* Строки */
+.row-materials { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.6fr 34px; gap: 6px; margin-bottom: 6px; }
+.row-equipment { display: grid; grid-template-columns: 1.4fr .8fr .8fr 1.1fr 1fr 34px; gap: 6px; margin-bottom: 6px; }
+.row-workers   { display: grid; grid-template-columns: 1.8fr 1fr 1fr 34px; gap: 6px; margin-bottom: 6px; }
+.row-materials input, .row-equipment input, .row-workers input { font-size: 12px; padding: 6px 8px; }
+
+.rm-btn {
+  background: #2a1610; color: var(--danger);
+  border: 1px solid #5a2018; cursor: pointer;
+  font-size: 14px; font-weight: 700; padding: 0; width: 34px;
+}
+.rm-btn:hover { background: #4a1810; }
+
+/* Кнопки */
+.btn {
+  background: var(--accent); color: #000; border: none;
+  padding: 10px 16px; font-family: inherit; font-weight: 700;
+  letter-spacing: 2px; font-size: 11px; text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+.btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line-hi); }
+.btn.danger    { background: transparent; color: var(--danger); border: 1px solid #5a2018; }
+.btn-small     { padding: 6px 10px; font-size: 10px; }
+.btn-row       { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* Результаты */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.stat {
+  background: #0b0c0e; border: 1px solid var(--line);
+  padding: 12px 12px 12px 16px; position: relative;
+}
+.stat::before {
+  content: ""; position: absolute; left: 0; top: 0;
+  width: 3px; height: 100%; background: var(--steel);
+}
+.stat .label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.stat .value { font-size: 16px; font-weight: 700; color: var(--text); }
+.stat .sub   { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.stat.accent::before { background: var(--accent); }
+.stat.accent .value  { color: var(--accent-2); }
+.stat.dark   { background: #000; border-color: var(--accent); }
+.stat.dark .value { color: var(--accent); font-size: 18px; }
+
+/* Сохранения */
+.saved-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px dashed var(--line);
+}
+.saved-item .name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saved-item .date { font-size: 10px; color: var(--muted); }
+.saved-item .info { flex: 1; min-width: 0; }
+.saved-item .actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* Графики */
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-wrap {
+  position: relative; height: 320px;
+  background: #0b0c0e; border: 1px solid var(--line); padding: 12px;
+}
+
+footer {
+  margin-top: 30px; padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between;
+  font-size: 10px; letter-spacing: 3px; color: var(--muted);
+  text-transform: uppercase;
+}
+.hint  { font-size: 10px; color: var(--muted); margin-top: 6px; }
+.empty { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
+
+/* ================= МОБИЛЬНАЯ АДАПТАЦИЯ ================= */
+@media (max-width: 650px) {
+  .grid, .charts { grid-template-columns: 1fr; }
+  .row-materials, .row-equipment, .row-workers {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--line); margin-bottom: 12px;
+  }
+  .row-materials input[name="name"], .row-materials input[name="link"],
+  .row-equipment input[name="name"],
+  .row-workers input[name="name"] { grid-column: span 2; }
+  .rm-btn { grid-column: span 2; width: 100%; padding: 8px; margin-top: 4px; }
+  input { font-size: 16px !important; padding: 10px !important; }
+  .hero { flex-direction: column; text-align: center; gap: 12px; }
+  .saved-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .saved-item .actions { width: 100%; }
+  .saved-item .actions button { flex: 1; }
+}
+</style>
 </body>
 </html>
